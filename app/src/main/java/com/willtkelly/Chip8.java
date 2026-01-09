@@ -19,12 +19,11 @@ public class Chip8 {
 
     
     public Chip8() {
-        load_rom_to_memory("resources/ROM/Chip8_Picture.ch8");
-        System.out.println(memory);
+        load_rom_to_memory("roms/Chip8_Picture.ch8");
     }
 
 
-    public boolean load_rom_to_memory(String path) {
+    private boolean load_rom_to_memory(String path) {
         try {
             byte[] rom = RomLoader.loadRom(path);
 
@@ -36,6 +35,27 @@ public class Chip8 {
         } catch (IOException e) {
             System.err.println(e.getMessage());
             return false;
+        }
+    }
+
+
+    private void print_memory_values() {
+        for (int i = START_OF_PROGRAM; i < MEMORY_CAPACITY; i++) {
+            System.out.println(memory[i] & 0xFF);
+        }
+    }
+
+
+    private void print_memory_hex() {
+        int counter = 1;
+        for (int i = START_OF_PROGRAM; i < MEMORY_CAPACITY; i++) {
+            counter++;
+            System.out.printf("%02X ", memory[i] & 0xFF);
+
+            if (counter == 4) {
+                System.out.println();
+                counter = 0;
+            }
         }
     }
 
