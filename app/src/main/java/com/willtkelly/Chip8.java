@@ -17,6 +17,10 @@ public class Chip8 {
     // Program Counter
     int programCounter = START_OF_PROGRAM;
 
+    // Stack Pointer
+    final int MAX_SUBROUTINES = 16;
+    ChipStack<int> stack = new ChipStack<>(MAX_SUBROUTINES);
+    
     
     public Chip8() {
         load_rom_to_memory("roms/Chip8_Picture.ch8");
