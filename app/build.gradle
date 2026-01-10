@@ -16,12 +16,20 @@ repositories {
 }
 
 dependencies {
-    // Use JUnit test framework.
-    testImplementation libs.junit
+    // JUnit
+    testImplementation "org.junit.jupiter:junit-jupiter:5.10.0"
 
-    // This dependency is used by the application.
-    implementation libs.guava
+    // Guava
+    implementation "com.google.guava:guava:32.1.2-jre"
+
+    // Core LibGDX
+    implementation "com.badlogicgames.gdx:gdx:1.11.0"
+
+    // Desktop backend (LWJGL3)
+    implementation "com.badlogicgames.gdx:gdx-backend-lwjgl3:1.11.0"
+    implementation "com.badlogicgames.gdx:gdx-platform:1.11.0:natives-desktop"
 }
+
 
 // Apply a specific Java toolchain to ease working on different environments.
 java {
