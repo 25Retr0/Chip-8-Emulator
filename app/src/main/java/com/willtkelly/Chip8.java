@@ -128,11 +128,65 @@ public class Chip8 {
             Vx = Vx + kk;
             this.V_registers[x] = (byte) (Vx & 0xFF);
         } else if (op == 8) {
-            if (n == 0) { // LD Vx, Vy
+            if (n == 0) { // 8xy0 - LD Vx, Vy
                 // Set Vx = Vy
                 this.V_registers[x] = this.V_registers[y];
-            } else if (n == 1) {
-
+            } else if (n == 1) { // 8xy1 - OR Vx, Vy
+                // Set Vx = Vx OR Vy
+                int result = this.V_registers[x] | this.V_registers[y];
+                this.V_registers[x] = (byte) (result & 0xFF);
+            } else if (n == 2) { // 8xy2 - AND Vx, Vy
+                // Set Vx = Vx AND Vy
+                int result = this.V_registers[x] & this.V_registers[y];
+                this.V_registers[x] = (byte) (result & 0xFF);
+            } else if (n == 3) { // 8xy3 - XOR Vx, Vy
+                // Set Vx = Vx XOR Vy
+                int result = this.V_registers[x] ^ this.V_registers[y];
+                this.V_registers[x] = (byte) (result & 0xFF);
+            } else if (n == 4) { // 8xy4 - ADD Vx, Vy
+                // Set Vx = Vx + Vy, Set VF = carry
+                int vx = V_registers[x] & 0xFF;
+                int vy = V_registers[y] & 0XFF;
+                int sum = vx + vy;
+                V_registers[0xF] = (byte) (sum > 255 ? 1 : 0);
+                V_registers[x] = (byte) (sum & 0xFF);
+            } else if (n == 5) { // 8xy5 - SUB Vx, Vy
+                // Set Vx = Vx - Vy, Set VF = NOT borrow
+                int vx = V_registers[x] & 0xFF;
+                int vy = V_registers[y] & 0XFF;
+                V_registers[0xF] = (byte) (vx > vy ? 1 : 0);
+                int result = vx - vy;
+                V_registers[x] = (byte) (result & 0xFF);
+            } else if (n == 6) { // 8xy6 - SHR Vx {, Vy}
+                // Set Vx = Vx SHR 1
+                // If the LSB f Vx is 1, then VF is set to 1, otherwise 0.
+                // Then Vx is divided by 2.
+                int vx = V_registers[x] & 0xFF;
+                int lsb = vx & 0x01;
+                V_registers[0xF] = (byte) (lsb & 0xFF);
+                vx = vx >> 1; // SHR
+                V_registers[x] = (byte) (vx & 0xFF);
+            } else if (n == 7) { // 8xy7 - SUBN Vx, Vy
+                // Set Vx = Vy - Vx, Set VF = NOT borrow
+                int vx = V_registers[x] & 0xFF;
+                int vy = V_registers[y] & 0XFF;
+                V_registers[0xF] = (byte) (vy > vx ? 1 : 0);
+                int result = vy - vx;
+                V_registers[x] = (byte) (result & 0xFF);
+            } else if (n == 0xE) { // 8xyE - SHL Vx {, Vy}
+                // Set Vx = Vx SHL 1.
+                // If the MSB of Vx is 1, Set VF to 1, otherwise 0. Then Vx
+                // is multiplied by 2.
+                int vx = V_registers[x] & 0xFF;
+                int msb = (vx & 0x80) >> 7;  // msb will be 0 or 1
+                V_registers[0xF] = (byte) (msb & 0xFF);
+                vx = (vx << 1) & 0xFF; // SHL, mask to 8-bit
+                V_registers[x] = (byte) (vx & 0xFF);
+            }
+        } else if (op == 9) { // 9xy0 - SNE Vx, Vy
+            // Skip next instruction if Vx != Vy.
+            if (this.V_registers[x] != this.V_registers[y]) {
+                this.programCounter += 2;
             }
         }
     }
