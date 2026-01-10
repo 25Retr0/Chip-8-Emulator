@@ -1,23 +1,22 @@
 
 package com.willtkelly;
 
-public class ChipStack<T> {
+public class ChipStack {
 
-    private T[] data; 
+    private int[] data; 
 
     private int capacity;
     private int stack_pointer;
 
-    @SuppressWarnings("unchecked")
     public ChipStack(int max_capacity) {
 
         this.capacity = max_capacity;
         this.stack_pointer = 0;
 
-        this.data = (T[]) new Object[max_capacity];
+        this.data = new int[max_capacity];
     }
 
-    public void push(T elem) {
+    public void push(int elem) {
         if (this.isFull()) {
             throw new MaxSubroutineError(this.capacity);
         }
@@ -26,9 +25,9 @@ public class ChipStack<T> {
     }
 
 
-    public T pop() {
+    public int pop() {
         if (this.isEmpty()) {
-            return null;
+            return 0;
         }
 
         return this.data[--this.stack_pointer];
