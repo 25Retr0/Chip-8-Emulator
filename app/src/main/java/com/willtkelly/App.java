@@ -3,8 +3,24 @@
  */
 package com.willtkelly;
 
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3Application;
+import com.badlogic.gdx.backends.lwjgl3.Lwjgl3ApplicationConfiguration;
+
 public class App {
+
     public static void main(String[] args) {
         Chip8 chip = new Chip8();
+
+        Chip8_Display display = new Chip8_Display();
+        chip.setDisplay(display);
+
+        int resolution_scale = 10;
+        int resolution_width = 64 * resolution_scale;
+        int resolution_height = 32 * resolution_scale;
+
+        Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
+        config.setTitle("CHIP-8 Emulator");
+        config.setWindowedMode(resolution_width, resolution_height);
+        new Lwjgl3Application(display, config);
     }
 }

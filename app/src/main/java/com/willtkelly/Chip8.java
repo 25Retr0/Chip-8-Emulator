@@ -5,31 +5,46 @@ import java.io.IOException;
 
 public class Chip8 {
 
-    final double TARGET_FPS = 60.0;
+    private final double TARGET_FPS = 60.0;
 
     // Memory
-    final int MEMORY_CAPACITY = 4096; // 4KB
-    byte[] memory = new byte[MEMORY_CAPACITY];
-    int START_OF_PROGRAM = 0x200;
+    private final int MEMORY_CAPACITY = 4096; // 4KB
+    private byte[] memory = new byte[MEMORY_CAPACITY];
+    private int START_OF_PROGRAM = 0x200;
     
     // Registers
-    final int REGISTERS = 16;
-    byte[] V_registers = new byte[REGISTERS];
-    int I_register = 0;
+    private final int REGISTERS = 16;
+    private byte[] V_registers = new byte[REGISTERS];
+    private byte I_register = 0;
 
     // Program Counter
-    int programCounter = START_OF_PROGRAM;
+    private int programCounter = START_OF_PROGRAM;
 
     // Stack Pointer
-    final int MAX_SUBROUTINES = 16;
-    ChipStack stack = new ChipStack(MAX_SUBROUTINES);
+    private final int MAX_SUBROUTINES = 16;
+    private ChipStack stack = new ChipStack(MAX_SUBROUTINES);
+
+    // Screen
+    private final int width = 64;
+    private final int height = 32;
+    private byte[][] screen = new byte[height][width];
+    Chip8_Display display_window;
     
+    // Timers
+    private int delay_timer = 0;
+    private int sound_timer = 0;
     
     public Chip8() {
-        // Initialization
-        this.load_rom_to_memory("roms/Chip8_Picture.ch8");
+        this.load_fonts_to_memory();
+
+        boolean rom_loaded = this.load_rom_to_memory("roms/Chip8_Picture.ch8");
+        if (!rom_loaded) { return; }
 
         this.run();
+    }
+
+    public void setDisplay(Chip8_Display display) {
+        this.display_window = display;
     }
 
     private void run() {
@@ -41,7 +56,7 @@ public class Chip8 {
             long now = System.nanoTime();
             delta += (now - lastTime) / ns;
             lastTime = now;
-            while(delta >= 1) {
+            while (delta >= 1) {
                 // TODO:
                 
                 // Fetch
@@ -53,7 +68,15 @@ public class Chip8 {
                 // Decode and execute
                 this.decode_execute(opcode);
 
-                return; // Temporary
+
+                // Countdown Timers
+                if (this.delay_timer > 0) {
+                    this.delay_timer--;
+                }
+
+                if (this.sound_timer > 0) {
+                    this.sound_timer--;
+                }
             }
         }
     }
@@ -80,7 +103,7 @@ public class Chip8 {
         
         if (op == 0) {
             if (opcode == 0x00E0) { // 00E0 - CLS
-                // TODO: Clear the display
+                this.screen = new byte[height][width];
                 
             } else if (opcode == 0x00EE) { // 00EE - RET
                 // Return from a subroutine
@@ -92,7 +115,7 @@ public class Chip8 {
                 this.programCounter = return_address;
 
             } else { // 0nnn - SYS addr
-
+                System.out.println("SYS addr command executed.");
             }
         } else if (op == 1) { // 1nnn - JP addr
             // Jump to location nnn. Set PC to nnn.
@@ -188,6 +211,17 @@ public class Chip8 {
             if (this.V_registers[x] != this.V_registers[y]) {
                 this.programCounter += 2;
             }
+        } else if (op == 0xA) { // Annn - LD I, addr
+            // Set I register to nnn.
+            I_register = (byte) (nnn & 0xFF);
+        } else if (op == 0xB) { // Bnnn - JP V0, addr
+            // Jump to location nnn + V0.
+            int v0 = this.V_registers[0] & 0xFF;
+            int location = nnn + v0;
+            this.programCounter = (byte) (location & 0xFF);
+        } else if (op == 0xC) { // Cxkk - RND Vx, byte
+
+
         }
     }
 
@@ -209,6 +243,122 @@ public class Chip8 {
         }
     }
 
+    private void load_fonts_to_memory() {
+        int font_start = 0x50;
+        
+        // '0'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // '1'
+        this.memory[font_start++] = (byte) 0x20;
+        this.memory[font_start++] = (byte) 0x60;
+        this.memory[font_start++] = (byte) 0x20;
+        this.memory[font_start++] = (byte) 0x20;
+        this.memory[font_start++] = (byte) 0x70;
+
+
+        // '2'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // '3'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // '4'
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0x10;
+
+        // '5'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // '6'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // '7'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0x20;
+        this.memory[font_start++] = (byte) 0x40;
+        this.memory[font_start++] = (byte) 0x40;
+
+        // '8'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // '9'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x10;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // 'A'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0x90;
+
+        // 'B'
+        this.memory[font_start++] = (byte) 0xE0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xE0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xE0;
+
+        // 'C'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // 'D'
+        this.memory[font_start++] = (byte) 0xE0;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0x90;
+        this.memory[font_start++] = (byte) 0xE0;
+
+        // 'E'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+
+        // 'F'
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0xF0;
+        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start++] = (byte) 0x80;
+    }
 
     /**
      */
@@ -235,8 +385,6 @@ public class Chip8 {
     }
 
 
-    /**
-     */
     
 
 }
