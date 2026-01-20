@@ -2,7 +2,7 @@ package com.willtkelly;
 
 import com.badlogic.gdx.ApplicationAdapter;
 
-public class Chip8_Display extends ApplicationAdapter {
+public class Display extends ApplicationAdapter {
 
     @Override
     public void create() {

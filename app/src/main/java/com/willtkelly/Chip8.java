@@ -2,10 +2,13 @@
 package com.willtkelly;
 
 import java.io.IOException;
+import java.util.Random;
 
 public class Chip8 {
 
     private final double TARGET_FPS = 60.0;
+
+    private Random random = new Random(System.nanoTime());
 
     // Memory
     private final int MEMORY_CAPACITY = 4096; // 4KB
@@ -15,21 +18,24 @@ public class Chip8 {
     // Registers
     private final int REGISTERS = 16;
     private byte[] V_registers = new byte[REGISTERS];
-    private byte I_register = 0;
+    private int I_register = 0;
 
     // Program Counter
     private int programCounter = START_OF_PROGRAM;
 
     // Stack Pointer
     private final int MAX_SUBROUTINES = 16;
-    private ChipStack stack = new ChipStack(MAX_SUBROUTINES);
+    private SubroutineStack stack = new SubroutineStack(MAX_SUBROUTINES);
 
     // Screen
     private final int width = 64;
     private final int height = 32;
     private byte[][] screen = new byte[height][width];
-    Chip8_Display display_window;
-    
+    Display display_window;
+
+    // Keyboard
+    Keyboard keyboard;
+
     // Timers
     private int delay_timer = 0;
     private int sound_timer = 0;
@@ -39,15 +45,18 @@ public class Chip8 {
 
         boolean rom_loaded = this.load_rom_to_memory("roms/Chip8_Picture.ch8");
         if (!rom_loaded) { return; }
-
-        this.run();
     }
 
-    public void setDisplay(Chip8_Display display) {
+    public void setDisplay(Display display) {
         this.display_window = display;
     }
 
-    private void run() {
+
+    public void setKeyboard(Keyboard keyboard) {
+        this.keyboard = keyboard;
+    }
+
+    public void run() {
         long lastTime = System.nanoTime();
         final double ns = 1_000_000.0 / TARGET_FPS;
         double delta = 0;
@@ -213,15 +222,70 @@ public class Chip8 {
             }
         } else if (op == 0xA) { // Annn - LD I, addr
             // Set I register to nnn.
-            I_register = (byte) (nnn & 0xFF);
+            I_register = nnn;
         } else if (op == 0xB) { // Bnnn - JP V0, addr
             // Jump to location nnn + V0.
             int v0 = this.V_registers[0] & 0xFF;
             int location = nnn + v0;
             this.programCounter = (byte) (location & 0xFF);
         } else if (op == 0xC) { // Cxkk - RND Vx, byte
+            // Generate a random number (0-255). And with kk. Put in Vx
+            int rnd = this.random.nextInt(256); // 0 - 255
+            int result = kk & rnd;
+            this.V_registers[x] = (byte) (result & 0XFF);
+        } else if (op == 0xD) { // Dxyn - DRW Vx, Vy, nibble
+            // Display n-bytes sprite starting at memory location I at (Vx, Vy),
+            // Set VF = collion.
+            byte vx = V_registers[x];
+            byte vy = V_registers[y];
+            display_sprite(vx, vy, n);
+        } else if (op == 0xE) {
+            // TODO: Need Keyboard Input
+            if (y == 0x9 && n == 0xE) { // Ex9E - SKP Vx
+
+            } else if (y == 0xA && n == 0x1) { // ExA1 - SKNP Vx
+
+            }
+        } else if (op == 0xF) {
+            if (y == 0x0 && n == 0x7) { // Fx07 - LD Vx, DT
+                // Set Vx = delay timer value
+                this.V_registers[x] = (byte) (this.delay_timer & 0xFF);
+            } else if (y == 0x0 && n == 0xA) { // Fx0A - LD Vx, K
+                // Wait for a key press, store the value of the key in Vx.
+                // All execution stops until a key is pressed.
+            } else if (y == 0x1 && n == 0x5) { // Fx15 - LD DT, Vx
+                // Set delay timer = Vx.
+                this.delay_timer = (this.V_registers[x] & 0xFF);
+            } else if (y == 0x1 && n == 0x8) { // Fx18 - LD ST, Vx
+                // Set the sound timer = Vx.
+                this.sound_timer = (this.V_registers[x] & 0xFF);
+            } else if (y == 0x1 && n == 0xE) { // Fx1E - ADD I, Vx.
+                // Set I = I + Vx.
+                int vx_value = this.V_registers[x] & 0xFF;
+                this.I_register += vx_value;
+            }
+
+        }
+    }
 
 
+    private void display_sprite(byte vx, byte vy, int n) {
+        for (int row = 0; row < n; row++) {
+            byte spriteByte = memory[I_register + row];
+
+            for (int bit = 0; bit < 8; bit++) {
+                int spritePixel = (spriteByte >> (7 - bit)) & 1;
+                if (spritePixel == 0) continue;
+
+                int x = (vx + bit) % 64;
+                int y = (vy + row) % 32;
+
+                if (screen[y][x] == 1) {
+                    V_registers[0xF] = 1; // collision
+                }
+
+                screen[y][x] ^= 1;
+            }
         }
     }
 

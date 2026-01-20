@@ -1,14 +1,14 @@
 
 package com.willtkelly;
 
-public class ChipStack {
+public class SubroutineStack {
 
-    private int[] data; 
+    private final int[] data;
 
-    private int capacity;
+    private final int capacity;
     private int stack_pointer;
 
-    public ChipStack(int max_capacity) {
+    public SubroutineStack(int max_capacity) {
 
         this.capacity = max_capacity;
         this.stack_pointer = 0;
