@@ -79,6 +79,12 @@ public class Chip8 {
                     return;
                 }
 
+                // Check if display has closed
+                if (!this.display_window.isWindowOpen()) {
+                    System.out.println("Window has closed, Exiting Emulator");
+                    return;
+                }
+
                 // Fetch
                 int opcode = this.fetch_instruction();
 
