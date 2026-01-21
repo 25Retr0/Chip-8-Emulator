@@ -34,7 +34,9 @@ public class Chip8 {
     Display display_window;
 
     // Keyboard
-    Keyboard keyboard;
+    private Keyboard keyboard;
+    private boolean waitingForKey = false;
+    private int waitingRegister = 0;
 
     // Timers
     private int delay_timer = 0;
@@ -66,8 +68,16 @@ public class Chip8 {
             delta += (now - lastTime) / ns;
             lastTime = now;
             while (delta >= 1) {
-                // TODO:
-                
+                if (this.waitingForKey) {
+                    int key = this.keyboard.getPressedKey();
+                    if (key != -1) {
+                        this.V_registers[this.waitingRegister] = (byte) (key & 0xFF);
+                        this.waitingForKey = false;
+                        this.programCounter += 2;
+                    }
+                    return;
+                }
+
                 // Fetch
                 int opcode = this.fetch_instruction();
 
@@ -86,6 +96,8 @@ public class Chip8 {
                 if (this.sound_timer > 0) {
                     this.sound_timer--;
                 }
+
+                delta--;
             }
         }
     }
@@ -242,17 +254,27 @@ public class Chip8 {
         } else if (op == 0xE) {
             // TODO: Need Keyboard Input
             if (y == 0x9 && n == 0xE) { // Ex9E - SKP Vx
-
+                // Skip next instruction if key with the value of Vx is pressed.
+                int vx = V_registers[x] & 0xFF;
+                if(this.keyboard.isKeyPressed(vx)) {
+                    this.programCounter += 2;
+                }
             } else if (y == 0xA && n == 0x1) { // ExA1 - SKNP Vx
-
+                // Skip next instruction if key with the value of Vx is not pressed.
+                int vx = V_registers[x] & 0xFF;
+                if(!this.keyboard.isKeyPressed(vx)) {
+                    this.programCounter += 2;
+                }
             }
-        } else if (op == 0xF) {
+        } else { // Else op == 0xF
             if (y == 0x0 && n == 0x7) { // Fx07 - LD Vx, DT
                 // Set Vx = delay timer value
                 this.V_registers[x] = (byte) (this.delay_timer & 0xFF);
             } else if (y == 0x0 && n == 0xA) { // Fx0A - LD Vx, K
                 // Wait for a key press, store the value of the key in Vx.
                 // All execution stops until a key is pressed.
+                this.waitingForKey = true;
+                this.waitingRegister = x;
             } else if (y == 0x1 && n == 0x5) { // Fx15 - LD DT, Vx
                 // Set delay timer = Vx.
                 this.delay_timer = (this.V_registers[x] & 0xFF);

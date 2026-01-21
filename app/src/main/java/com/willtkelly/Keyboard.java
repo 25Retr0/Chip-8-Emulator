@@ -50,6 +50,14 @@ public class Keyboard implements KeyListener {
         return Arrays.copyOf(keyState, keyState.length);
     }
 
+    public int getPressedKey() {
+        for (int i = 0; i < 16; i++) {
+            if (keyState[i]) {
+                return i;
+            }
+        }
+        return -1;
+    }
 
     @Override
     public void keyTyped(KeyEvent keyEvent) {
