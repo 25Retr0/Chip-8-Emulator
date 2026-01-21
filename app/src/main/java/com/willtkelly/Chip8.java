@@ -14,6 +14,7 @@ public class Chip8 {
     private final int MEMORY_CAPACITY = 4096; // 4KB
     private byte[] memory = new byte[MEMORY_CAPACITY];
     private int START_OF_PROGRAM = 0x200;
+    private int FONT_START = 0x50;
     
     // Registers
     private final int REGISTERS = 16;
@@ -285,8 +286,37 @@ public class Chip8 {
                 // Set I = I + Vx.
                 int vx_value = this.V_registers[x] & 0xFF;
                 this.I_register += vx_value;
-            }
+            } else if (kk == 0x29) { // Fx29 - LD F, Vx
+                // Set I = location of sprite for digit Vx.
+                int vx = this.V_registers[x] & 0xFF;
+                this.I_register = this.get_digit_sprite_location(vx);
+            } else if (kk == 0x33) { // Fx33 - LD B, Vx
+                // Store BCD representation of Vx in memory locations I, I+1, and I+2
+                int vx = this.V_registers[x] & 0xFF;
+                int hundredsDigit = (vx / 100) % 10;
+                int tensDigit =  (vx / 10) & 10;
+                int onesDigit = vx % 10;
 
+                this.memory[this.I_register] = (byte) (hundredsDigit  & 0xFF);
+                this.memory[this.I_register + 1] = (byte) (tensDigit  & 0xFF);
+                this.memory[this.I_register + 2] = (byte) (onesDigit  & 0xFF);
+
+
+            } else if (kk == 0x55) { // Fx55 - LD [I], Vx
+                // Store registers V0 through Vx in memory starting at Location I.
+                int starting_location = this.I_register;
+
+                for (byte register : this.V_registers) {
+                    this.memory[starting_location++] = register;
+                }
+            } else if (kk == 0x65) { // Fx65 - LD Vx, [I]
+                // Read registers V0 through Vx from memory starting at location I.
+                int starting_location = this.I_register;
+
+                for (int i = 0; i < this.REGISTERS; i++) {
+                    this.V_registers[i] = this.memory[starting_location++];
+                }
+            }
         }
     }
 
@@ -311,6 +341,13 @@ public class Chip8 {
         }
     }
 
+    private int get_digit_sprite_location(int digit) {
+        int font_start = this.FONT_START;
+        int font_size = 5; // 5 bytes per font
+
+        return font_start + (digit * font_size);
+    }
+
 
     /**
      */
@@ -319,7 +356,7 @@ public class Chip8 {
             byte[] rom = RomLoader.loadRom(path);
 
             for (int i = 0; i < rom.length; i++) {
-                this.memory[START_OF_PROGRAM + i] = rom[i];            
+                this.memory[START_OF_PROGRAM + i] = rom[i];
             }
 
             return true;
@@ -330,8 +367,8 @@ public class Chip8 {
     }
 
     private void load_fonts_to_memory() {
-        int font_start = 0x50;
-        
+        int font_start = this.FONT_START;
+
         // '0'
         this.memory[font_start++] = (byte) 0xF0;
         this.memory[font_start++] = (byte) 0x90;
@@ -443,7 +480,7 @@ public class Chip8 {
         this.memory[font_start++] = (byte) 0x80;
         this.memory[font_start++] = (byte) 0xF0;
         this.memory[font_start++] = (byte) 0x80;
-        this.memory[font_start++] = (byte) 0x80;
+        this.memory[font_start] = (byte) 0x80;
     }
 
     /**
