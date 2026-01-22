@@ -29,9 +29,9 @@ public class Chip8 {
     private SubroutineStack stack = new SubroutineStack(MAX_SUBROUTINES);
 
     // Screen
-    private final int width = 64;
-    private final int height = 32;
-    private byte[][] screen = new byte[height][width];
+    private final int bytes = 8;
+    private final int rows = 32;
+    private byte[][] screen = new byte[rows][bytes];
     Display display_window;
 
     // Keyboard
@@ -46,7 +46,8 @@ public class Chip8 {
     public Chip8() {
         this.load_fonts_to_memory();
 
-        boolean rom_loaded = this.load_rom_to_memory("roms/Chip8_Picture.ch8");
+        String rom = "roms/Trip8_Demo.ch8";
+        boolean rom_loaded = this.load_rom_to_memory(rom);
         if (!rom_loaded) { return; }
     }
 
@@ -110,7 +111,7 @@ public class Chip8 {
         
         if (op == 0) {
             if (opcode == 0x00E0) { // 00E0 - CLS
-                this.screen = new byte[height][width];
+                this.screen = new byte[rows][bytes];
                 
             } else if (opcode == 0x00EE) { // 00EE - RET
                 // Return from a subroutine
@@ -307,21 +308,29 @@ public class Chip8 {
 
 
     private void display_sprite(byte vx, byte vy, int n) {
+        V_registers[0xF] = 0;
+        int xStart = vx & 0xFF;
+        int yStart = vy & 0xFF;
+
         for (int row = 0; row < n; row++) {
+            int y = (yStart + row) % this.rows;
             byte spriteByte = memory[I_register + row];
 
             for (int bit = 0; bit < 8; bit++) {
-                int spritePixel = (spriteByte >> (7 - bit)) & 1;
-                if (spritePixel == 0) continue;
+                if (((spriteByte >> (7 - bit)) & 1) == 0) continue;
 
-                int x = (vx + bit) % 64;
-                int y = (vy + row) % 32;
+                int x = (xStart + bit) % 64;
 
-                if (screen[y][x] == 1) {
+                int byteIndex = x / this.bytes;
+                int bitIndex = 7 - (x % this.bytes);
+
+                int mask = 1 << bitIndex;
+
+                if ((screen[y][byteIndex] & mask) != 1) {
                     V_registers[0xF] = 1; // collision
                 }
 
-                screen[y][x] ^= 1;
+                screen[y][byteIndex] ^= (byte) mask;
             }
         }
     }

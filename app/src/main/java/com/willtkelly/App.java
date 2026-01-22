@@ -15,7 +15,7 @@ public class App {
         int resolution_width = 64 * resolution_scale;
         int resolution_height = 32 * resolution_scale;
 
-        Display display = new Display(resolution_width, resolution_height, resolution_scale);
+        Display display = new Display();
         Keyboard keyboard = new Keyboard();
         chip.setDisplay(display);
         chip.setKeyboard(keyboard);
