@@ -1,6 +1,8 @@
 
 package com.willtkelly;
 
+import com.badlogic.gdx.Gdx;
+
 import java.io.IOException;
 import java.util.Random;
 
@@ -59,54 +61,29 @@ public class Chip8 {
         this.keyboard = keyboard;
     }
 
-    public void run() {
-        long lastTime = System.nanoTime();
-        final double ns = 1_000_000.0 / TARGET_FPS;
-        double delta = 0;
-
-        while (true) {
-            long now = System.nanoTime();
-            delta += (now - lastTime) / ns;
-            lastTime = now;
-            while (delta >= 1) {
-                if (this.waitingForKey) {
-                    int key = this.keyboard.getPressedKey();
-                    if (key != -1) {
-                        this.V_registers[this.waitingRegister] = (byte) (key & 0xFF);
-                        this.waitingForKey = false;
-                        this.programCounter += 2;
-                    }
-                    return;
-                }
-
-                // Check if display has closed
-                if (!this.display_window.isWindowOpen()) {
-                    System.out.println("Window has closed, Exiting Emulator");
-                    return;
-                }
-
-                // Fetch
-                int opcode = this.fetch_instruction();
-
-                // Increment PC
-                this.programCounter += 2;
-
-                // Decode and execute
-                this.decode_execute(opcode);
-
-
-                // Countdown Timers
-                if (this.delay_timer > 0) {
-                    this.delay_timer--;
-                }
-
-                if (this.sound_timer > 0) {
-                    this.sound_timer--;
-                }
-
-                delta--;
+    public void step() {
+        keyboard.update();
+        if (waitingForKey) {
+            int key = keyboard.getPressedKey();
+            if (key != -1) {
+                V_registers[waitingRegister] = (byte) key;
+                waitingForKey = false;
+                programCounter += 2;
             }
+            return;
         }
+
+        if (keyboard.isEscapePressed()) {
+            Gdx.app.exit();
+            return;
+        }
+
+        int opcode = fetch_instruction();
+        programCounter += 2;
+        decode_execute(opcode);
+
+        if (delay_timer > 0) delay_timer--;
+        if (sound_timer > 0) sound_timer--;
     }
 
 

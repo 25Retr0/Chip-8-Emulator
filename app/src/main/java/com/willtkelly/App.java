@@ -15,6 +15,7 @@ public class App {
         Keyboard keyboard = new Keyboard();
         chip.setDisplay(display);
         chip.setKeyboard(keyboard);
+        display.setChip(chip);
 
         int resolution_scale = 10;
         int resolution_width = 64 * resolution_scale;
@@ -24,7 +25,5 @@ public class App {
         config.setTitle("CHIP-8 Emulator");
         config.setWindowedMode(resolution_width, resolution_height);
         new Lwjgl3Application(display, config);
-
-        chip.run();
     }
 }

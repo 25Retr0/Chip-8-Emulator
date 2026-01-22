@@ -1,91 +1,48 @@
 package com.willtkelly;
 
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.util.Arrays;
 
-public class Keyboard implements KeyListener {
+import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.Input;
 
-    private int[] keymap;
-    private boolean[] keyState;
+public class Keyboard {
 
-    public Keyboard() {
-        this.keymap = new int[256];
-        Arrays.fill(this.keymap, -1);
+    private final boolean[] keys = new boolean[16];
 
-        this.keymap[KeyEvent.VK_1] = 0x1;
-        this.keymap[KeyEvent.VK_2] = 0x2;
-        this.keymap[KeyEvent.VK_3] = 0x3;
-        this.keymap[KeyEvent.VK_4] = 0xC;
+    public void update() {
+        keys[0x0] = Gdx.input.isKeyPressed(Input.Keys.X);
+        keys[0x1] = Gdx.input.isKeyPressed(Input.Keys.NUM_1);
+        keys[0x2] = Gdx.input.isKeyPressed(Input.Keys.NUM_2);
+        keys[0x3] = Gdx.input.isKeyPressed(Input.Keys.NUM_3);
 
-        this.keymap[KeyEvent.VK_Q] = 0x4;
-        this.keymap[KeyEvent.VK_W] = 0x5;
-        this.keymap[KeyEvent.VK_E] = 0x6;
-        this.keymap[KeyEvent.VK_R] = 0xD;
+        keys[0x4] = Gdx.input.isKeyPressed(Input.Keys.Q);
+        keys[0x5] = Gdx.input.isKeyPressed(Input.Keys.W);
+        keys[0x6] = Gdx.input.isKeyPressed(Input.Keys.E);
+        keys[0x7] = Gdx.input.isKeyPressed(Input.Keys.A);
 
-        this.keymap[KeyEvent.VK_A] = 0x7;
-        this.keymap[KeyEvent.VK_S] = 0x8;
-        this.keymap[KeyEvent.VK_D] = 0x9;
-        this.keymap[KeyEvent.VK_F] = 0xE;
+        keys[0x8] = Gdx.input.isKeyPressed(Input.Keys.S);
+        keys[0x9] = Gdx.input.isKeyPressed(Input.Keys.D);
+        keys[0xA] = Gdx.input.isKeyPressed(Input.Keys.Z);
+        keys[0xB] = Gdx.input.isKeyPressed(Input.Keys.C);
 
-        this.keymap[KeyEvent.VK_Z] = 0xA;
-        this.keymap[KeyEvent.VK_X] = 0x0;
-        this.keymap[KeyEvent.VK_C] = 0xB;
-        this.keymap[KeyEvent.VK_V] = 0xF;
-
-
-        this.keyState = new boolean[16];
-        Arrays.fill(this.keyState, false);
+        keys[0xC] = Gdx.input.isKeyPressed(Input.Keys.NUM_4);
+        keys[0xD] = Gdx.input.isKeyPressed(Input.Keys.R);
+        keys[0xE] = Gdx.input.isKeyPressed(Input.Keys.F);
+        keys[0xF] = Gdx.input.isKeyPressed(Input.Keys.V);
     }
 
-    public void setKeymap(int[] keymap) {
-        this.keymap = keymap;
-    }
-
-    public boolean isKeyPressed(int key) {
-        return this.keyState[key];
-    }
-
-    public boolean[] getKeysPressed() {
-        return Arrays.copyOf(keyState, keyState.length);
+    public boolean isEscapePressed() {
+        return Gdx.input.isKeyPressed(Input.Keys.ESCAPE);
     }
 
     public int getPressedKey() {
-        for (int i = 0; i < 16; i++) {
-            if (keyState[i]) {
-                return i;
-            }
+        for (int i = 0; i < keys.length; i++) {
+            if (keys[i]) return i;
         }
         return -1;
     }
 
-    @Override
-    public void keyTyped(KeyEvent keyEvent) {
-        // Unused for Chip-8 Emulators
-    }
-
-    @Override
-    public void keyPressed(KeyEvent e) {
-        int code = e.getKeyCode();
-
-        if (code < 0 || code >= keymap.length) return;
-
-        int chip8Key = keymap[code];
-        if (chip8Key != -1) {
-            keyState[chip8Key] = true;
-        }
-    }
-
-    @Override
-    public void keyReleased(KeyEvent e) {
-        int code = e.getKeyCode();
-
-        if (code < 0 || code >= keymap.length) return;
-
-        int chip8Key = keymap[code];
-        if (chip8Key != -1) {
-            keyState[chip8Key] = false;
-        }
+    public boolean isKeyPressed(int keycode) {
+        return keys[keycode & 0xF];
     }
 }
 
