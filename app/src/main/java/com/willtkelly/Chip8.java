@@ -8,8 +8,6 @@ import java.util.Random;
 
 public class Chip8 {
 
-    private final double TARGET_FPS = 60.0;
-
     private Random random = new Random(System.nanoTime());
 
     // Memory
@@ -54,6 +52,10 @@ public class Chip8 {
 
     public void setDisplay(Display display) {
         this.display_window = display;
+    }
+
+    public byte[][] getScreen() {
+        return this.screen;
     }
 
 

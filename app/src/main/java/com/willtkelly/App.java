@@ -11,15 +11,15 @@ public class App {
     public static void main(String[] args) {
         Chip8 chip = new Chip8();
 
-        Display display = new Display();
+        int resolution_scale = 10;
+        int resolution_width = 64 * resolution_scale;
+        int resolution_height = 32 * resolution_scale;
+
+        Display display = new Display(resolution_width, resolution_height, resolution_scale);
         Keyboard keyboard = new Keyboard();
         chip.setDisplay(display);
         chip.setKeyboard(keyboard);
         display.setChip(chip);
-
-        int resolution_scale = 10;
-        int resolution_width = 64 * resolution_scale;
-        int resolution_height = 32 * resolution_scale;
 
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("CHIP-8 Emulator");
