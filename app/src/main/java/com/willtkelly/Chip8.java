@@ -14,6 +14,7 @@ public class Chip8 {
     private final int MEMORY_CAPACITY = 4096; // 4KB
     private byte[] memory = new byte[MEMORY_CAPACITY];
     private int START_OF_PROGRAM = 0x200;
+    private int PROGRAM_SIZE;
     private int FONT_START = 0x50;
     
     // Registers
@@ -43,10 +44,9 @@ public class Chip8 {
     private int delay_timer = 0;
     private int sound_timer = 0;
     
-    public Chip8() {
+    public Chip8(String rom) {
         this.load_fonts_to_memory();
-
-        String rom = "roms/Trip8_Demo.ch8";
+        this.PROGRAM_SIZE = rom.length();
         boolean rom_loaded = this.load_rom_to_memory(rom);
         if (!rom_loaded) { return; }
     }
@@ -87,6 +87,12 @@ public class Chip8 {
 
         if (delay_timer > 0) delay_timer--;
         if (sound_timer > 0) sound_timer--;
+
+        if (programCounter >= (START_OF_PROGRAM + PROGRAM_SIZE)) {
+            System.out.println("End of Program Reached... Exiting");
+            Gdx.app.exit();
+            return;
+        }
     }
 
 
@@ -123,7 +129,7 @@ public class Chip8 {
                 this.programCounter = return_address;
 
             } else { // 0nnn - SYS addr
-                System.out.println("SYS addr command executed.");
+                // Do nothing, it's for legacy machines
             }
         } else if (op == 1) { // 1nnn - JP addr
             // Jump to location nnn. Set PC to nnn.

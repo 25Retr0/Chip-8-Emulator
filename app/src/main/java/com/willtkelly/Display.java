@@ -12,6 +12,8 @@ public class Display extends ApplicationAdapter {
     private int pixles_per_bytes = 8;
     private int scale = 10;
 
+    private float fpsTimer = 0f;
+
     ShapeRenderer shapeRenderer;
 
     public void setChip(Chip8 chip) {
@@ -28,9 +30,16 @@ public class Display extends ApplicationAdapter {
     @Override
     public void render() {
         // Rendering code
+        fpsTimer += Gdx.graphics.getDeltaTime();
+
+        if (fpsTimer >= 5f) {
+            // System.out.println("FPS: " + Gdx.graphics.getFramesPerSecond());
+            fpsTimer = 0f;
+        }
+
         chip.step();
-        byte[][] screen = chip.getScreen();
-        draw(screen);
+        draw(chip.getScreen());
+
     }
 
     private void draw(byte[][] screen) {
@@ -49,7 +58,7 @@ public class Display extends ApplicationAdapter {
                 for (int bit = 7; bit >=0; bit--) {
                     if(((b >> bit) & 1) == 1) {
                         int x = (xByte * 8 + (7 - bit)) * this.scale;
-                        int y = row * scale;
+                        int y = (this.rows - 1 -row) * scale; // Flip as libgdx is bottom-left
                         shapeRenderer.rect(x, y, this.scale, this.scale);
                     }
                 }
@@ -57,7 +66,6 @@ public class Display extends ApplicationAdapter {
         }
 
         shapeRenderer.end();
-
     }
 
     @Override
