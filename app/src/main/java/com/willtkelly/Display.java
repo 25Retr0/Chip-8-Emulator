@@ -33,13 +33,12 @@ public class Display extends ApplicationAdapter {
         fpsTimer += Gdx.graphics.getDeltaTime();
 
         if (fpsTimer >= 5f) {
-            // System.out.println("FPS: " + Gdx.graphics.getFramesPerSecond());
+            System.out.println("FPS: " + Gdx.graphics.getFramesPerSecond());
             fpsTimer = 0f;
         }
 
         chip.step();
         draw(chip.getScreen());
-
     }
 
     private void draw(byte[][] screen) {
@@ -58,7 +57,7 @@ public class Display extends ApplicationAdapter {
                 for (int bit = 7; bit >=0; bit--) {
                     if(((b >> bit) & 1) == 1) {
                         int x = (xByte * 8 + (7 - bit)) * this.scale;
-                        int y = (this.rows - 1 -row) * scale; // Flip as libgdx is bottom-left
+                        int y = (this.rows - 1 -row) * this.scale; // Flip as libgdx is bottom-left
                         shapeRenderer.rect(x, y, this.scale, this.scale);
                     }
                 }

@@ -10,6 +10,8 @@ public class Chip8 {
 
     private Random random = new Random(System.nanoTime());
 
+    private boolean halt_cpu = false;
+
     // Memory
     private final int MEMORY_CAPACITY = 4096; // 4KB
     private byte[] memory = new byte[MEMORY_CAPACITY];
@@ -81,18 +83,27 @@ public class Chip8 {
             return;
         }
 
+        if (this.isCpuHalted()) {
+            return;
+        }
+
         int opcode = fetch_instruction();
         programCounter += 2;
+
+        if (programCounter >= (4096)) {
+            System.out.println("End of Program Reached... Halting");
+            this.halt_cpu = true;
+        }
+
         decode_execute(opcode);
 
         if (delay_timer > 0) delay_timer--;
         if (sound_timer > 0) sound_timer--;
 
-        if (programCounter >= (START_OF_PROGRAM + PROGRAM_SIZE)) {
-            System.out.println("End of Program Reached... Exiting");
-            Gdx.app.exit();
-            return;
-        }
+    }
+
+    public boolean isCpuHalted() {
+        return this.halt_cpu;
     }
 
 
@@ -232,7 +243,7 @@ public class Chip8 {
             // Jump to location nnn + V0.
             int v0 = this.V_registers[0] & 0xFF;
             int location = nnn + v0;
-            this.programCounter = (byte) (location & 0xFF);
+            this.programCounter = (byte) (location & 0xFFF); // 0xFFF for 12 bits
         } else if (op == 0xC) { // Cxkk - RND Vx, byte
             // Generate a random number (0-255). And with kk. Put in Vx
             int rnd = this.random.nextInt(256); // 0 - 255
@@ -286,7 +297,7 @@ public class Chip8 {
                 // Store BCD representation of Vx in memory locations I, I+1, and I+2
                 int vx = this.V_registers[x] & 0xFF;
                 int hundredsDigit = (vx / 100) % 10;
-                int tensDigit =  (vx / 10) & 10;
+                int tensDigit =  (vx / 10) % 10;
                 int onesDigit = vx % 10;
 
                 this.memory[this.I_register] = (byte) (hundredsDigit  & 0xFF);
@@ -297,15 +308,18 @@ public class Chip8 {
             } else if (kk == 0x55) { // Fx55 - LD [I], Vx
                 // Store registers V0 through Vx in memory starting at Location I.
                 int starting_location = this.I_register;
+                int vx = this.V_registers[x] & 0xFF;
 
-                for (byte register : this.V_registers) {
+                for (int i = 0; i < vx; i++) {
+                    byte register = this.V_registers[i];
                     this.memory[starting_location++] = register;
                 }
             } else if (kk == 0x65) { // Fx65 - LD Vx, [I]
                 // Read registers V0 through Vx from memory starting at location I.
                 int starting_location = this.I_register;
+                int vx = this.V_registers[x] & 0xFF;
 
-                for (int i = 0; i < this.REGISTERS; i++) {
+                for (int i = 0; i < vx; i++) {
                     this.V_registers[i] = this.memory[starting_location++];
                 }
             }
@@ -332,7 +346,9 @@ public class Chip8 {
 
                 int mask = 1 << bitIndex;
 
-                if ((screen[y][byteIndex] & mask) != 1) {
+                // Get the current state of the specific pixel we are looking at
+                // If (screen byte AND mask) is NOT zero, the pixel is currently ON
+                if ((screen[y][byteIndex] & mask) != 0) {
                     V_registers[0xF] = 1; // collision
                 }
 
